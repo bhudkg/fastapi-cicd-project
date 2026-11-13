@@ -129,6 +129,7 @@ jobs:
     env:
       DEPLOY_ENV_FILE: /Users/deepakgangwar/cicdApp/.env
       GHCR_IMAGE: ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+      COMPOSE_PROJECT_NAME: cicdapp
 
     steps:
       - name: Checkout source code
