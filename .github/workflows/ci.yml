@@ -1,3 +1,4 @@
+
 name: FastAPI CI
 
 on:
@@ -7,6 +8,9 @@ on:
     branches: [main, master]
 
 jobs:
+  # -----------------------------------------
+  # JOB 1: TEST AND QUALITY CHECKS
+  # -----------------------------------------
   test:
     name: Test and Quality Checks
     runs-on: ubuntu-latest
@@ -37,7 +41,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
+          cache: pip
           cache-dependency-path: requirements-dev.txt
 
       - name: Install dependencies
@@ -57,6 +61,9 @@ jobs:
       - name: Run pytest
         run: python -m pytest -v
 
+  # -----------------------------------------
+  # JOB 2: BUILD AND PUBLISH DOCKER IMAGE
+  # -----------------------------------------
   publish-image:
     name: Build and Publish Docker Image
     runs-on: ubuntu-latest
@@ -71,6 +78,9 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -95,12 +105,16 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # -----------------------------------------
+  # JOB 3: DEPLOY TO MACBOOK
+  # -----------------------------------------
   deploy-local:
     name: Deploy to MacBook
     runs-on: self-hosted
@@ -143,6 +157,7 @@ jobs:
               echo "Deployment successful!"
               exit 0
             fi
+
             sleep 5
           done
 
