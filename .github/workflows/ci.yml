@@ -131,10 +131,10 @@ jobs:
         run: docker info
 
       - name: Pull latest application image
-        run: docker compose pull api
+        run: docker compose --env-file "$DEPLOY_ENV_FILE" pull api
 
       - name: Deploy application
-        run: docker compose up -d --no-build --remove-orphans
+        run: docker compose --env-file "$DEPLOY_ENV_FILE" up -d --no-build --remove-orphans
 
       - name: Verify deployment
         run: |
@@ -147,6 +147,5 @@ jobs:
           done
 
           echo "Deployment health check failed"
-          docker compose logs api
+          docker compose --env-file "$DEPLOY_ENV_FILE" logs api
           exit 1
-  
