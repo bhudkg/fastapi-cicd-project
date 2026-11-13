@@ -100,4 +100,53 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-local:
+    name: Deploy to MacBook
+    runs-on: self-hosted
+    needs: publish-image
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      DEPLOY_ENV_FILE: /Users/deepakgangwar/cicdApp/.env
+      GHCR_IMAGE: ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Docker
+        run: docker info
+
+      - name: Pull latest application image
+        run: docker compose pull api
+
+      - name: Deploy application
+        run: docker compose up -d --no-build --remove-orphans
+
+      - name: Verify deployment
+        run: |
+          for i in {1..15}; do
+            if curl --fail http://localhost:8000/health/ready; then
+              echo "Deployment successful!"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Deployment health check failed"
+          docker compose logs api
+          exit 1
   
